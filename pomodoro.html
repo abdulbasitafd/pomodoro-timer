@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4A49B1',
+                        'work': '#E74C3C',
+                        'break': '#2ECC71',
+                        'long-break': '#3498DB'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+    <!-- Check for dark mode preference -->
+    <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+
+    <div class="container mx-auto max-w-md px-4 py-8 flex flex-col min-h-screen">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-center mb-2">Pomodoro Timer</h1>
+            <p class="text-center text-gray-600 dark:text-gray-400">Focus, take breaks, stay productive</p>
+        </header>
+
+        <main class="flex-grow flex flex-col items-center justify-center">
+            <!-- Timer Card -->
+            <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+                <!-- Timer Mode Tabs -->
+                <div class="grid grid-cols-3 gap-2 mb-6">
+                    <button id="work-btn" class="py-2 px-4 rounded-lg bg-work bg-opacity-90 text-white font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-work">
+                        Work
+                    </button>
+                    <button id="break-btn" class="py-2 px-4 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-break">
+                        Break
+                    </button>
+                    <button id="long-break-btn" class="py-2 px-4 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-long-break">
+                        Long Break
+                    </button>
+                </div>
+
+                <!-- Timer Display -->
+                <div id="timer-circle" class="w-64 h-64 mx-auto mb-8 rounded-full flex items-center justify-center relative">
+                    <svg class="absolute top-0 left-0 w-full h-full" viewBox="0 0 100 100">
+                        <circle 
+                            cx="50" cy="50" r="46" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            stroke-width="8"
+                            class="text-gray-200 dark:text-gray-700"
+                        />
+                        <circle 
+                            id="timer-progress" 
+                            cx="50" cy="50" r="46" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            stroke-width="8"
+                            stroke-dasharray="289.02652413026095"
+                            stroke-dashoffset="0"
+                            stroke-linecap="round"
+                            class="text-work transform -rotate-90 origin-center transition-all duration-1000"
+                        />
+                    </svg>
+                    <div class="text-center z-10">
+                        <div id="timer-display" class="text-6xl font-bold tracking-tight">25:00</div>
+                        <div id="timer-label" class="text-lg font-medium text-gray-600 dark:text-gray-400">Work Time</div>
+                    </div>
+                </div>
+
+                <!-- Timer Controls -->
+                <div class="flex justify-center space-x-6">
+                    <button id="start-btn" class="h-14 w-14 flex items-center justify-center rounded-full bg-primary hover:bg-primary-dark text-white shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                        <i class="fas fa-play text-xl"></i>
+                    </button>
+                    <button id="pause-btn" class="h-14 w-14 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 hidden">
+                        <i class="fas fa-pause text-xl"></i>
+                    </button>
+                    <button id="reset-btn" class="h-14 w-14 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                        <i class="fas fa-redo-alt text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Settings</h2>
+                
+                <!-- Timer Duration Settings -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="work-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Work Duration (minutes)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="work-duration" 
+                            min="1" 
+                            max="60" 
+                            value="25" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary"
+                        >
+                    </div>
+                    <div>
+                        <label for="break-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Break Duration (minutes)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="break-duration" 
+                            min="1" 
+                            max="30" 
+                            value="5" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary"
+                        >
+                    </div>
+                    <div>
+                        <label for="long-break-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Long Break Duration (minutes)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="long-break-duration" 
+                            min="1" 
+                            max="60" 
+                            value="15" 
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-base bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary"
+                        >
+                    </div>
+                    
+                    <!-- Sound Toggle -->
+                    <div class="flex items-center mt-2">
+                        <input 
+                            type="checkbox" 
+                            id="sound-enabled" 
+                            checked 
+                            class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary dark:focus:ring-primary"
+                        >
+                        <label for="sound-enabled" class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Enable sound notifications
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Card -->
+            <div class="w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Statistics</h2>
+                <div class="flex justify-between">
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                        <p id="completed-count" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Current Cycle</p>
+                        <p id="current-cycle" class="text-2xl font-bold">1/4</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Focus Time</p>
+                        <p id="focus-time" class="text-2xl font-bold">00:00</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="py-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p>Stay focused, take breaks, be productive!</p>
+        </footer>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="work-complete-sound" preload="auto">
+        <source src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAKAAAGhgCFhYWFhYWFhYWFhYWFhYWFhYW0tLS0tLS0tLS0tLS0tLS0tLTi4uLi4uLi4uLi4uLi4uLi4uL///////////////////////////////////////////8AAAA8TEFNRTMuMTAwAZUAAAAAAAAAABQgJAUHQQAB4QAABoYixjqEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxLkAE7htJDTxgAKWMJkjPPACVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDEpAGUAGUAdAAAIAMEA7AAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMSVgALAVR+8wYAhNpyhqAqAbFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==" type="audio/mp3">
+    </audio>
+    <audio id="break-complete-sound" preload="auto">
+        <source src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAKAAAI/QBYWFhYWFhYWFhYWFhYWFhYWFiKioqKioqKioqKioqKioqKioq8vLy8vLy8vLy8vLy8vLy8vLzu7u7u7u7u7u7u7u7u7u7u7u7///////////////////////////////////////////8AAAA8TEFNRTMuMTAwAZUAAAAAAAAAABQgJAWEQQAB4QAACPyOXMNiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxBYDwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/+xDENAPAAAGkAAAAIAAANIAAAARVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/7EMQzA8AAAaQAAAAgAAA0gAAABFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==" type="audio/mp3">
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const timerDisplay = document.getElementById('timer-display');
+            const timerLabel = document.getElementById('timer-label');
+            const timerProgress = document.getElementById('timer-progress');
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const workBtn = document.getElementById('work-btn');
+            const breakBtn = document.getElementById('break-btn');
+            const longBreakBtn = document.getElementById('long-break-btn');
+            const workDurationInput = document.getElementById('work-duration');
+            const breakDurationInput = document.getElementById('break-duration');
+            const longBreakDurationInput = document.getElementById('long-break-duration');
+            const soundEnabledCheckbox = document.getElementById('sound-enabled');
+            const completedCountDisplay = document.getElementById('completed-count');
+            const currentCycleDisplay = document.getElementById('current-cycle');
+            const focusTimeDisplay = document.getElementById('focus-time');
+            const workCompleteSound = document.getElementById('work-complete-sound');
+            const breakCompleteSound = document.getElementById('break-complete-sound');
+
+            // Timer state
+            let timerState = {
+                mode: 'work',
+                timeLeft: 25 * 60,
+                totalTime: 25 * 60,
+                isRunning: false,
+                interval: null,
+                completedPomodoros: 0,
+                currentCycle: 1,
+                totalFocusTime: 0
+            };
+
+            // Circle animation values
+            const circumference = 2 * Math.PI * 46;
+            timerProgress.style.strokeDasharray = circumference;
+
+            // Initialize display
+            updateTimerDisplay();
+            updateModeButtons();
+
+            // Event listeners
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            workBtn.addEventListener('click', () => changeMode('work'));
+            breakBtn.addEventListener('click', () => changeMode('break'));
+            longBreakBtn.addEventListener('click', () => changeMode('long-break'));
+
+            // Settings change event listeners
+            workDurationInput.addEventListener('change', updateSettings);
+            breakDurationInput.addEventListener('change', updateSettings);
+            longBreakDurationInput.addEventListener('change', updateSettings);
+
+            // Function to update settings
+            function updateSettings() {
+                // Get values from inputs
+                const workMins = parseInt(workDurationInput.value) || 25;
+                const breakMins = parseInt(breakDurationInput.value) || 5;
+                const longBreakMins = parseInt(longBreakDurationInput.value) || 15;
+                
+                // Validate ranges
+                workDurationInput.value = Math.min(Math.max(workMins, 1), 60);
+                breakDurationInput.value = Math.min(Math.max(breakMins, 1), 30);
+                longBreakDurationInput.value = Math.min(Math.max(longBreakMins, 1), 60);
+
+                // If timer is not running, update current timer based on mode
+                if (!timerState.isRunning) {
+                    resetTimer();
+                }
+            }
+
+            // Start the timer
+            function startTimer() {
+                if (timerState.isRunning) return;
+                
+                timerState.isRunning = true;
+                startBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+                
+                timerState.interval = setInterval(() => {
+                    if (timerState.timeLeft > 0) {
+                        timerState.timeLeft--;
+                        
+                        // Update focus time if in work mode
+                        if (timerState.mode === 'work') {
+                            timerState.totalFocusTime++;
+                            updateFocusTimeDisplay();
+                        }
+                        
+                        updateTimerDisplay();
+                        updateProgress();
+                    } else {
+                        clearInterval(timerState.interval);
+                        handleTimerComplete();
+                    }
+                }, 1000);
+            }
+
+            // Pause the timer
+            function pauseTimer() {
+                if (!timerState.isRunning) return;
+                
+                timerState.isRunning = false;
+                clearInterval(timerState.interval);
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+            }
+
+            // Reset the timer
+            function resetTimer() {
+                clearInterval(timerState.interval);
+                
+                // Reset to current mode with fresh time
+                if (timerState.mode === 'work') {
+                    timerState.timeLeft = parseInt(workDurationInput.value) * 60;
+                    timerState.totalTime = timerState.timeLeft;
+                } else if (timerState.mode === 'break') {
+                    timerState.timeLeft = parseInt(breakDurationInput.value) * 60;
+                    timerState.totalTime = timerState.timeLeft;
+                } else if (timerState.mode === 'long-break') {
+                    timerState.timeLeft = parseInt(longBreakDurationInput.value) * 60;
+                    timerState.totalTime = timerState.timeLeft;
+                }
+                
+                timerState.isRunning = false;
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                
+                updateTimerDisplay();
+                updateProgress();
+            }
+
+            // Change timer mode
+            function changeMode(mode) {
+                if (timerState.mode === mode) return;
+                
+                timerState.mode = mode;
+                clearInterval(timerState.interval);
+                timerState.isRunning = false;
+                
+                // Set the time based on the mode
+                if (mode === 'work') {
+                    timerState.timeLeft = parseInt(workDurationInput.value) * 60;
+                    timerLabel.textContent = 'Work Time';
+                    timerProgress.classList.remove('text-break', 'text-long-break');
+                    timerProgress.classList.add('text-work');
+                } else if (mode === 'break') {
+                    timerState.timeLeft = parseInt(breakDurationInput.value) * 60;
+                    timerLabel.textContent = 'Break Time';
+                    timerProgress.classList.remove('text-work', 'text-long-break');
+                    timerProgress.classList.add('text-break');
+                } else if (mode === 'long-break') {
+                    timerState.timeLeft = parseInt(longBreakDurationInput.value) * 60;
+                    timerLabel.textContent = 'Long Break';
+                    timerProgress.classList.remove('text-work', 'text-break');
+                    timerProgress.classList.add('text-long-break');
+                }
+                
+                timerState.totalTime = timerState.timeLeft;
+                startBtn.classList.remove('hidden');
+                pauseBtn.classList.add('hidden');
+                
+                updateTimerDisplay();
+                updateProgress();
+                updateModeButtons();
+            }
+
+            // Handle timer completion
+            function handleTimerComplete() {
+                // Play sound if enabled
+                if (soundEnabledCheckbox.checked) {
+                    if (timerState.mode === 'work') {
+                        workCompleteSound.play().catch(error => console.log('Audio play failed:', error));
+                    } else {
+                        breakCompleteSound.play().catch(error => console.log('Audio play failed:', error));
+                    }
+                }
+                
+                // If work mode completed
+                if (timerState.mode === 'work') {
+                    timerState.completedPomodoros++;
+                    completedCountDisplay.textContent = timerState.completedPomodoros;
+                    
+                    // After 4 pomodoros, take a long break
+                    if (timerState.currentCycle % 4 === 0) {
+                        changeMode('long-break');
+                    } else {
+                        changeMode('break');
+                    }
+                    
+                    timerState.currentCycle = (timerState.currentCycle % 4) + 1;
+                    currentCycleDisplay.textContent = `${timerState.currentCycle}/4`;
+                } else {
+                    // After break, go back to work
+                    changeMode('work');
+                }
+                
+                // Auto-start the next timer
+                startTimer();
+            }
+
+            // Format time to MM:SS
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // Update timer display
+            function updateTimerDisplay() {
+                timerDisplay.textContent = formatTime(timerState.timeLeft);
+            }
+
+            // Update progress circle
+            function updateProgress() {
+                const progress = timerState.timeLeft / timerState.totalTime;
+                const offset = circumference - (progress * circumference);
+                timerProgress.style.strokeDashoffset = offset;
+            }
+
+            // Update mode button styles
+            function updateModeButtons() {
+                // Reset all buttons
+                workBtn.classList.remove('bg-work', 'bg-opacity-90', 'text-white');
+                breakBtn.classList.remove('bg-break', 'bg-opacity-90', 'text-white');
+                longBreakBtn.classList.remove('bg-long-break', 'bg-opacity-90', 'text-white');
+                
+                workBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                breakBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                longBreakBtn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                
+                // Highlight active button
+                if (timerState.mode === 'work') {
+                    workBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    workBtn.classList.add('bg-work', 'bg-opacity-90', 'text-white');
+                } else if (timerState.mode === 'break') {
+                    breakBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    breakBtn.classList.add('bg-break', 'bg-opacity-90', 'text-white');
+                } else if (timerState.mode === 'long-break') {
+                    longBreakBtn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    longBreakBtn.classList.add('bg-long-break', 'bg-opacity-90', 'text-white');
+                }
+            }
+
+            // Update focus time display
+            function updateFocusTimeDisplay() {
+                const hours = Math.floor(timerState.totalFocusTime / 3600);
+                const mins = Math.floor((timerState.totalFocusTime % 3600) / 60);
+                focusTimeDisplay.textContent = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+            }
+        });
+    </script>
+</body>
+</html>
